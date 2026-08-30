@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Telestrator</title>
+  <link rel="stylesheet" href="css/common.css">
+  <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+    }
+    .landing-container {
+      max-width: 600px;
+      width: 100%;
+      padding: 40px 20px;
+      text-align: center;
+      animation: slideUp 0.5s ease;
+    }
+    h1 {
+      font-size: 48px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      text-shadow: var(--shadow-glow);
+      background: linear-gradient(135deg, #fff, var(--accent-blue));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .subtitle {
+      font-size: 18px;
+      color: var(--text-secondary);
+      margin-bottom: 48px;
+    }
+    .pin-section {
+      margin-bottom: 40px;
+    }
+    .pin-input {
+      font-size: 24px;
+      text-align: center;
+      letter-spacing: 4px;
+      padding: 12px 24px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-glass);
+      color: var(--text-primary);
+      width: 200px;
+    }
+    .pin-input:focus {
+      outline: none;
+      border-color: var(--accent-blue);
+    }
+    .modes {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+    }
+    .mode-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 32px 24px;
+      flex: 1;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: block;
+      color: var(--text-primary);
+    }
+    .mode-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--border-active);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3), inset 0 0 20px rgba(74,158,255,0.05);
+    }
+    .mode-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+    }
+    .mode-title {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .mode-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .footer {
+      margin-top: 48px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="landing-container">
+    <h1>Telestrator</h1>
+    <p class="subtitle">Real-time presentation telestration</p>
+    
+    <div class="pin-section">
+      <input type="text" id="session-pin" class="pin-input" placeholder="PIN" maxlength="6" autocomplete="off">
+    </div>
+
+    <div class="modes">
+      <a href="#" class="mode-card" id="present-link">
+        <div class="mode-icon">🎨</div>
+        <div class="mode-title">Present</div>
+        <div class="mode-desc">Create and annotate presentations</div>
+      </a>
+      <a href="#" class="mode-card" id="view-link">
+        <div class="mode-icon">📺</div>
+        <div class="mode-title">View</div>
+        <div class="mode-desc">Watch the live presentation</div>
+      </a>
+    </div>
+
+    <div class="footer">
+      Version 1.0.0
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('present-link').addEventListener('click', (e) => {
+      e.preventDefault();
+      const pin = document.getElementById('session-pin').value || Math.floor(1000 + Math.random() * 9000).toString();
+      window.location.href = `presenter.html?pin=${pin}`;
+    });
+    
+    document.getElementById('view-link').addEventListener('click', (e) => {
+      e.preventDefault();
+      const pin = document.getElementById('session-pin').value;
+      if (!pin) {
+        alert("Please enter a PIN to view.");
+        return;
+      }
+      window.location.href = `viewer.html?pin=${pin}`;
+    });
+  </script>
+</body>
+</html>

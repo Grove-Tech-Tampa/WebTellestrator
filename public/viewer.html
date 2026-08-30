@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Telestrator - Viewer</title>
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/viewer.css">
+</head>
+<body>
+  
+  <div class="viewer-container" id="viewer-container">
+    <!-- Canvases will be injected here -->
+  </div>
+
+  <div class="pin-overlay" id="pin-overlay">
+    <div class="pin-card">
+      <h2>Join Presentation</h2>
+      <input type="text" id="viewer-pin" class="pin-input" placeholder="Enter PIN" maxlength="6" autocomplete="off">
+      <button id="join-btn" class="join-btn">Join</button>
+      <p class="error-msg hidden" id="error-msg">Invalid PIN or unable to connect.</p>
+    </div>
+  </div>
+
+  <div class="status-indicator" id="status-indicator"></div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="/js/viewer/ViewerApp.js"></script>
+</body>
+</html>

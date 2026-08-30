@@ -1,0 +1,21 @@
+[
+  {
+    "id": "63500f9c24b5f3913f7f76ac2da96b55",
+    "name": "Main Presentation",
+    "images": [
+      {
+        "id": "31ce576fc0a1660f744735b4cf3da994",
+        "filename": "1788095681478-201140525.jpg",
+        "originalName": "7.jpg",
+        "order": 0
+      },
+      {
+        "id": "e9f5545ffc83a22523c2db10999d4d3c",
+        "filename": "1788095681520-640195174.jpg",
+        "originalName": "8.jpg",
+        "order": 1
+      }
+    ],
+    "createdAt": "2026-08-21T22:27:56.723Z"
+  }
+]

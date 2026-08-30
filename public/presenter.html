@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Telestrator - Presenter</title>
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/presenter.css">
+  <style>
+    html, body {
+      touch-action: none; /* Crucial for drawing */
+    }
+  </style>
+</head>
+<body>
+  <div class="presenter-container">
+    <div class="top-bar">
+      <div class="session-info">
+        <span id="pin-display">PIN: ----</span>
+      </div>
+      <div class="image-counter" id="image-counter">No images loaded</div>
+      <button class="settings-btn" id="settings-btn">⚙️</button>
+    </div>
+
+    <div class="canvas-container" id="canvas-container">
+      <button class="nav-arrow nav-prev" id="nav-prev">‹</button>
+      <button class="nav-arrow nav-next" id="nav-next">›</button>
+    </div>
+
+    <div class="tool-dock" id="tool-dock">
+      <button class="tool-btn active" data-tool="pen">✒️</button>
+      <button class="tool-btn" data-tool="pencil">✏️</button>
+      <button class="tool-btn" data-tool="marker">🖍️</button>
+      <button class="tool-btn" data-tool="brush">🖌️</button>
+      <button class="tool-btn" data-tool="eraser">🧽</button>
+      <button class="tool-btn" id="stamp-tool-btn" data-tool="stamp">⬡</button>
+      
+      <div class="divider"></div>
+      
+      <button class="tool-btn" id="undo-btn">↩</button>
+      <button class="tool-btn" id="redo-btn">↪</button>
+      <button class="tool-btn" id="clear-btn">🗑️</button>
+      
+      <div class="divider"></div>
+      
+      <div class="slider-group">
+        <input type="range" id="size-slider" min="1" max="80" value="5">
+        <input type="range" id="opacity-slider" min="0" max="100" value="100">
+      </div>
+      
+      <div class="divider"></div>
+      
+      <div class="color-palette" id="color-palette">
+        <!-- populated by JS -->
+      </div>
+      <button class="tool-btn" id="more-colors-btn">⊕</button>
+      
+      <div class="divider"></div>
+      <button class="tool-btn" id="library-btn">📚</button>
+    </div>
+
+    <div class="stamp-picker" id="stamp-picker">
+      <button class="stamp-btn" data-stamp="circle">◯</button>
+      <button class="stamp-btn" data-stamp="rectangle">⬜</button>
+      <button class="stamp-btn" data-stamp="star">⭐</button>
+      <button class="stamp-btn" data-stamp="arrow">➔</button>
+      <button class="stamp-btn" data-stamp="checkmark">✓</button>
+      <button class="stamp-btn" data-stamp="xmark">✗</button>
+      <button class="stamp-btn" data-stamp="number">1️⃣</button>
+      <button class="stamp-btn stamp-reset-btn" id="stamp-reset-btn" title="Reset number counter back to 1" style="font-size:13px; font-weight:bold; color:var(--accent-blue);">🔄#1</button>
+    </div>
+
+    <div class="side-panel-overlay" id="side-panel-overlay"></div>
+    <div class="side-panel" id="side-panel">
+      <div class="side-panel-header">
+        <h3>Library</h3>
+        <button class="close-panel-btn" id="close-panel-btn">✕</button>
+      </div>
+      <div class="side-panel-content">
+        <select id="collection-select" style="width: 100%; padding: 8px; margin-bottom: 16px; background: var(--bg-primary); color: white; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);">
+          <option value="">Select Collection</option>
+        </select>
+        <div style="display:flex; gap:8px; margin-bottom:16px;">
+          <button id="add-collection-btn" style="flex:1; padding:8px; background:var(--bg-tertiary); border-radius:var(--radius-sm); font-size:13px;">+ New Collection</button>
+          <button id="delete-collection-btn" style="padding:8px 12px; background:rgba(255, 59, 92, 0.15); color:var(--accent-red); border:1px solid rgba(255, 59, 92, 0.3); border-radius:var(--radius-sm); font-size:13px;" title="Delete Current Collection">🗑️ Delete</button>
+        </div>
+        
+        <div class="upload-zone" id="upload-zone">
+          <p>Drop images here<br>or click to upload</p>
+          <input type="file" id="file-input" multiple accept="image/*" style="display: none;">
+        </div>
+        
+        <div class="image-grid" id="image-grid">
+          <!-- Thumbnails populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <div class="color-picker-modal" id="color-picker-modal">
+      <h3 style="text-align:center;">Pick Color</h3>
+      <canvas id="hsl-canvas" width="200" height="200"></canvas>
+      <div style="display:flex; align-items:center; gap:8px;">
+        <div id="color-preview" style="width:40px; height:40px; border-radius:4px; border:1px solid #fff;"></div>
+        <input type="text" id="hex-input" style="flex:1; padding:8px; background:var(--bg-primary); border:1px solid var(--border-subtle); color:#fff;">
+      </div>
+      <input type="range" id="cp-opacity" min="0" max="100" value="100">
+      <div style="display:flex; justify-content:space-between; gap:16px;">
+        <button id="cp-cancel" style="flex:1; padding:12px; background:var(--bg-tertiary); border-radius:var(--radius-sm);">Cancel</button>
+        <button id="cp-apply" style="flex:1; padding:12px; background:var(--accent-blue); border-radius:var(--radius-sm);">Apply</button>
+      </div>
+    </div>
+
+    <div class="settings-modal" id="settings-modal">
+      <h3 style="margin-bottom:20px;">Settings</h3>
+      <div style="margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
+        <span>Navigation Mode</span>
+        <select id="nav-mode-select" style="padding:4px 8px; background:var(--bg-primary); color:#fff; border:1px solid var(--border-subtle); border-radius:var(--radius-sm);">
+          <option value="button">Buttons</option>
+          <option value="swipe">Swipe</option>
+        </select>
+      </div>
+      <div style="margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
+        <span>Finger Drawing (Touch)</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="toggle-finger-input" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div style="margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
+        <span>Apple Pencil / Stylus</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="toggle-stylus-input" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div style="margin-bottom:24px; display:flex; justify-content:space-between; align-items:center;">
+        <span>NDI Output</span>
+        <span style="color:var(--text-muted); font-size:12px;">Coming soon</span>
+      </div>
+      <button id="close-settings-btn" style="width:100%; padding:12px; background:var(--bg-tertiary); border-radius:var(--radius-sm);">Close</button>
+    </div>
+
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script type="module" src="/js/presenter/PresenterApp.js"></script>
+</body>
+</html>
