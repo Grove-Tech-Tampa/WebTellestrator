@@ -26,11 +26,10 @@ export class NavigationMode {
     let startX = 0;
     let startY = 0;
     let startTime = 0;
-    let touchCount = 0;
 
-    // Touch events for mobile/iPad Safari
     container.addEventListener('touchstart', (e) => {
-      touchCount = e.touches.length;
+      // If mode is 'button', do not process touch swipe at all
+      if (this.mode !== 'swipe') return;
       if (e.touches.length === 1 || e.touches.length === 2) {
         startX = e.touches[0].clientX;
         startY = e.touches[0].clientY;
@@ -39,6 +38,8 @@ export class NavigationMode {
     }, { passive: true });
 
     container.addEventListener('touchend', (e) => {
+      // STRICT HONORING: If navigation mode is 'button', disable swipe slide transition
+      if (this.mode !== 'swipe') return;
       if (!e.changedTouches || e.changedTouches.length === 0) return;
 
       const endX = e.changedTouches[0].clientX;
@@ -52,22 +53,10 @@ export class NavigationMode {
       // 2. Horizontal distance |deltaX| > 45px
       // 3. Dominantly horizontal movement: |deltaX| > |deltaY| * 1.2
       if (elapsedTime < 600 && Math.abs(deltaX) > 45 && Math.abs(deltaX) > Math.abs(deltaY) * 1.2) {
-        const containerRect = container.getBoundingClientRect();
-        const startRelX = (startX - containerRect.left) / containerRect.width;
-
-        // Active conditions for swipe:
-        // A) If mode is 'swipe'
-        // B) OR if user performs a 2-finger swipe anywhere
-        // C) OR if 1-finger swipe starts near outer left/right margins (outer 30%)
-        const isTwoFinger = (touchCount >= 2);
-        const isEdgeSwipe = (startRelX < 0.3 || startRelX > 0.7);
-
-        if (this.mode === 'swipe' || isTwoFinger || isEdgeSwipe) {
-          if (deltaX < 0) {
-            this.next();
-          } else {
-            this.prev();
-          }
+        if (deltaX < 0) {
+          this.next();
+        } else {
+          this.prev();
         }
       }
     }, { passive: true });
