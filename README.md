@@ -2,13 +2,14 @@
 
 A high-performance, low-latency, web-based real-time telestration application designed for live presentations, sermon illustrations, and broadcast environments.
 
-An iPad on stage serves as the **Presenter** interface for drawing over sermon slides or images. A remote computer (Mac/PC) joins as a **Viewer** in a browser tab to feed the clean output canvas directly into **ProPresenter** (via Syphon, NDI Screen Capture, or Window Capture) for projection onto auditorium screens.
+An iPad on stage serves as the **Presenter** interface for drawing over sermon slides or images. ProPresenter 7 displays the live annotations natively by embedding the **Viewer URL** directly as a **Web Element** on any slide — no Syphon or external capture software required!
 
 ---
 
 ## 🌟 Key Features
 
 - **⚡ Near-Zero-Lag Sync**: Real-time vector stroke synchronization over WebSocket (<10ms latency on local WiFi).
+- **🎭 Native ProPresenter 7 Integration**: Add the Viewer URL (`http://<server-ip>:3000/viewer.html?pin=XXXX`) directly onto any ProPresenter slide as a Web Element.
 - **📱 Apple Pencil & iPad Optimized**:
   - 240Hz ProMotion coalesced events for silky-smooth curves.
   - Pressure sensitivity & tilt telemetry support.
@@ -30,7 +31,7 @@ An iPad on stage serves as the **Presenter** interface for drawing over sermon s
 - **🔐 PIN Session System**:
   - Simple PIN-based presentation room creation. Presenter and Viewer join using the same numeric PIN.
 - **🖥️ Chrome-Less Viewer Output**:
-  - Pure, full-viewport canvas mirror with no toolbars or UI elements — ready for Syphon / NDI capture into ProPresenter.
+  - Pure, full-viewport canvas mirror with no toolbars or UI elements — optimized for ProPresenter Web Objects or NDI streams.
 
 ---
 
@@ -41,8 +42,8 @@ An iPad on stage serves as the **Presenter** interface for drawing over sermon s
    - **Operating System**: macOS, Windows 10/11, or Linux.
 2. **Presenter Device (Stage)**:
    - Apple iPad running Safari (iPadOS 14+) with Apple Pencil or finger touch.
-3. **Viewer Device (Production Booth)**:
-   - Mac or PC running ProPresenter 7 with Google Chrome or Safari.
+3. **Viewer / Production Display**:
+   - ProPresenter 7 (macOS or Windows) on the production computer.
 4. **Network**:
    - Local Area Network (Wi-Fi or Ethernet) connecting the iPad and the ProPresenter computer.
 
@@ -82,7 +83,7 @@ Local Network IPs:
 ### 1. Host Landing Page
 Navigate to `http://localhost:3000` (or `http://<your-ip>:3000` from any device on your local network).
 - Enter a 4-to-6 digit numeric **PIN** (e.g. `3661`).
-- Click **Present** on the iPad, or click **View** on the ProPresenter computer.
+- Click **Present** on the iPad, or click **View** on the production computer.
 
 ---
 
@@ -100,23 +101,20 @@ URL: `http://<server-ip>:3000/presenter.html?pin=3661`
 
 ---
 
-### 3. Viewer Mode & ProPresenter Integration (BOOTH)
-URL: `http://<server-ip>:3000/viewer.html?pin=3661`
+### 3. ProPresenter 7 Integration (NATIVE & DIRECT)
 
-1. Open `http://localhost:3000/viewer.html?pin=3661` in Safari or Chrome on the ProPresenter Mac.
-2. The viewer automatically connects and displays a clean, chrome-less video output of the background image and annotations.
+No Syphon or external screen capture software is needed! You can embed the Viewer canvas directly into ProPresenter as a native **Web Element**.
 
-#### 🎥 Bringing Output into ProPresenter 7:
+#### 🎥 Adding Viewer as a Web Element in ProPresenter 7:
 
-- **Method A: Syphon / Screen Capture Utility (macOS — Zero Latency)**
-  1. Use **Syphoner** or **ScreenCaptureSyphon** on macOS to capture the browser window containing `viewer.html` and publish it as a Syphon source.
-  2. Open ProPresenter 7 ➔ **Settings** ➔ **Inputs** ➔ Add a new **Video Input** ➔ Select **Syphon**.
-  3. Trigger the Video Input on your presentation slides or Props layer.
-
-- **Method B: NDI Tools (macOS / Windows)**
-  1. Open **NDI Screen Capture** (from NDI Tools) on the computer running the browser viewer window.
-  2. Select the browser window as an NDI source.
-  3. In ProPresenter 7 ➔ **Settings** ➔ **Inputs** ➔ Add **Video Input** ➔ Select **NDI**.
+1. Open **ProPresenter 7** on your production computer.
+2. Edit an existing slide or create a new slide/presentation for Telestration.
+3. Click **+ Add Element** in the Slide Editor ➔ Select **Web**.
+4. In the Inspector sidebar for the Web Element:
+   - Set **URL** to: `http://localhost:3000/viewer.html?pin=3661`  
+     *(or `http://<server-ip>:3000/viewer.html?pin=3661` if running on a separate machine)*.
+   - Adjust the Web Element size to **1920 x 1080** (full 16:9 canvas).
+5. Trigger the slide! ProPresenter will display the live telestrator canvas and background images natively on screen.
 
 ---
 
