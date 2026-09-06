@@ -103,8 +103,12 @@ class PresenterApp {
     });
 
     // 6. Setup NavigationMode
+    const savedNavMode = localStorage.getItem('telestrator_nav_mode') || 'button';
+    const savedUsePressure = localStorage.getItem('telestrator_use_pressure') !== 'false';
+    this.drawingEngine.setUsePressure(savedUsePressure);
+
     this.navMode = new NavigationMode({
-      mode: 'button',
+      mode: savedNavMode,
       drawingEngine: this.drawingEngine,
       onImageChange: (image, index, total, prevImageId, prevSnapshot) => {
         const counterEl = document.getElementById('image-counter');
@@ -150,6 +154,7 @@ class PresenterApp {
     const navModeSelect = document.getElementById('nav-mode-select');
     const toggleFingerInput = document.getElementById('toggle-finger-input');
     const toggleStylusInput = document.getElementById('toggle-stylus-input');
+    const togglePressureInput = document.getElementById('toggle-pressure-input');
 
     if (settingsBtn && settingsModal) {
       settingsBtn.addEventListener('click', () => {
@@ -162,8 +167,11 @@ class PresenterApp {
       });
     }
     if (navModeSelect) {
+      navModeSelect.value = savedNavMode;
       navModeSelect.addEventListener('change', (e) => {
-        this.navMode.setMode(e.target.value);
+        const val = e.target.value;
+        this.navMode.setMode(val);
+        localStorage.setItem('telestrator_nav_mode', val);
       });
     }
     if (toggleFingerInput) {
@@ -174,6 +182,14 @@ class PresenterApp {
     if (toggleStylusInput) {
       toggleStylusInput.addEventListener('change', (e) => {
         this.drawingEngine.setAllowStylusInput(e.target.checked);
+      });
+    }
+    if (togglePressureInput) {
+      togglePressureInput.checked = savedUsePressure;
+      togglePressureInput.addEventListener('change', (e) => {
+        const enabled = e.target.checked;
+        this.drawingEngine.setUsePressure(enabled);
+        localStorage.setItem('telestrator_use_pressure', enabled ? 'true' : 'false');
       });
     }
 

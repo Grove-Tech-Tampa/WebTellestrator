@@ -44,7 +44,7 @@
       <div class="divider"></div>
       
       <div class="slider-group">
-        <input type="range" id="size-slider" min="1" max="80" value="5">
+        <input type="range" id="size-slider" min="1" max="25" value="5">
         <input type="range" id="opacity-slider" min="0" max="100" value="100">
       </div>
       
@@ -130,6 +130,13 @@
         <span>Apple Pencil / Stylus</span>
         <label class="toggle-switch">
           <input type="checkbox" id="toggle-stylus-input" checked>
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div style="margin-bottom:16px; display:flex; justify-content:space-between; align-items:center;">
+        <span>Pencil Pressure Sensitivity</span>
+        <label class="toggle-switch">
+          <input type="checkbox" id="toggle-pressure-input" checked>
           <span class="slider"></span>
         </label>
       </div>

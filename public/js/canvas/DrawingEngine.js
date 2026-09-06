@@ -22,6 +22,7 @@ export class DrawingEngine {
     
     this.allowTouchInput = true;
     this.allowStylusInput = true;
+    this.usePressure = true;
     
     this.annotationSnapshots = new Map(); // Map<imageId, dataURL>
     this.history = new CanvasHistory();
@@ -72,10 +73,24 @@ export class DrawingEngine {
     this.drawCanvas.style.width = '100%';
     this.drawCanvas.style.height = '100%';
     this.drawCanvas.style.touchAction = 'none'; // Critical for pointer events
+    this.drawCanvas.style.webkitTouchCallout = 'none';
+    this.drawCanvas.style.webkitUserSelect = 'none';
+    this.drawCanvas.style.userSelect = 'none';
+    
     this.drawCtx = this.drawCanvas.getContext('2d', { desynchronized: true, alpha: true });
     
     this.container.appendChild(this.bgCanvas);
     this.container.appendChild(this.drawCanvas);
+
+    // Prevent text selection, magnifier loupe, and tap callout gestures on rapid stroke lifts
+    ['contextmenu', 'selectstart', 'dragstart', 'gesturestart', 'gesturechange', 'gestureend'].forEach(evtName => {
+      this.drawCanvas.addEventListener(evtName, (e) => e.preventDefault());
+    });
+
+    this.drawCanvas.addEventListener('touchstart', (e) => {
+      // Stop iOS Safari selection callout/magnifier routines during fast pen drawing
+      if (e.cancelable) e.preventDefault();
+    }, { passive: false });
     
     this.handleResize();
     window.addEventListener('resize', this._handleResize);
@@ -199,6 +214,7 @@ export class DrawingEngine {
 
   setAllowTouchInput(allowed) { this.allowTouchInput = !!allowed; }
   setAllowStylusInput(allowed) { this.allowStylusInput = !!allowed; }
+  setUsePressure(allowed) { this.usePressure = !!allowed; }
 
   // Snapshot handling
   saveAnnotationSnapshot(imageId) {
@@ -269,14 +285,17 @@ export class DrawingEngine {
   // Pointer event handlers
   normalizeEvent(e) {
     const rect = this.drawCanvas.getBoundingClientRect();
+    const rawPressure = (e.pressure !== undefined && e.pressure > 0) ? e.pressure : 0.5;
     return {
       x: (e.clientX - rect.left) / rect.width,
       y: (e.clientY - rect.top) / rect.height,
-      pressure: e.pressure !== undefined ? e.pressure : 0.5
+      pressure: rawPressure
     };
   }
 
   handlePointerDown(e) {
+    if (e.cancelable) e.preventDefault();
+
     // User-configured input toggles (Finger touch vs Apple Pencil / Stylus)
     if (!this.allowTouchInput && e.pointerType === 'touch') return;
     if (!this.allowStylusInput && e.pointerType === 'pen') return;
@@ -315,6 +334,7 @@ export class DrawingEngine {
   }
 
   handlePointerMove(e) {
+    if (e.cancelable) e.preventDefault();
     if (!this.isDrawing || e.pointerId !== this.activePointerId) return;
 
     // Use getCoalescedEvents for higher frequency points if available
@@ -348,6 +368,7 @@ export class DrawingEngine {
   }
 
   handlePointerUp(e) {
+    if (e.cancelable) e.preventDefault();
     if (e.pointerId !== this.activePointerId) return;
     
     if (this.isDrawing) {
@@ -380,7 +401,7 @@ export class DrawingEngine {
       color: this.currentColor,
       size: normalizedSize,
       opacity: this.currentOpacity,
-      pressureSensitivity: 0.5
+      usePressure: this.usePressure
     };
   }
 
