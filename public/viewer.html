@@ -16,6 +16,9 @@
   <div class="pin-overlay" id="pin-overlay">
     <div class="pin-card">
       <h2>Join Presentation</h2>
+      <select id="target-device-select" style="width:100%; padding:10px 14px; margin-bottom:14px; background:var(--bg-primary); color:#fff; border:1px solid var(--border-subtle); border-radius:var(--radius-sm); font-size:14px;">
+        <option value="">-- Select Target Computer --</option>
+      </select>
       <input type="text" id="viewer-pin" class="pin-input" placeholder="Enter PIN" maxlength="6" autocomplete="off">
       <button id="join-btn" class="join-btn">Join</button>
       <p class="error-msg hidden" id="error-msg">Invalid PIN or unable to connect.</p>

@@ -1,6 +1,8 @@
 const express = require('express');
 const router = express.Router();
 const collectionService = require('../services/collectionService');
+const knownViewerService = require('../services/knownViewerService');
+const socketService = require('../services/socketService');
 
 // Collections
 router.get('/collections', (req, res) => {
@@ -64,6 +66,42 @@ router.get('/favorites', (req, res) => {
 router.put('/favorites', (req, res) => {
   const favorites = collectionService.updateFavorites(req.body);
   res.json(favorites);
+});
+
+// Known Viewer Devices
+router.get('/known-viewers', (req, res) => {
+  const viewers = knownViewerService.getAllKnownViewers();
+  const enriched = viewers.map(v => {
+    const sessionInfo = socketService.getPinSessionInfo ? socketService.getPinSessionInfo(v.pin) : { isOnline: false, viewerCount: 0 };
+    return {
+      ...v,
+      isOnline: sessionInfo.isOnline,
+      viewerCount: sessionInfo.viewerCount,
+      hasPresenter: sessionInfo.hasPresenter
+    };
+  });
+  res.json(enriched);
+});
+
+router.post('/known-viewers', (req, res) => {
+  const { name, pin } = req.body;
+  if (!name || !pin) return res.status(400).json({ error: 'Name and PIN are required' });
+  const clientIp = req.ip || req.connection.remoteAddress;
+  const viewer = knownViewerService.registerKnownViewer({ name, pin: String(pin).trim(), ip: clientIp });
+  res.status(201).json(viewer);
+});
+
+router.put('/known-viewers/:id', (req, res) => {
+  const { name, pin } = req.body;
+  const viewer = knownViewerService.updateKnownViewer(req.params.id, { name, pin: pin ? String(pin).trim() : undefined });
+  if (viewer) res.json(viewer);
+  else res.status(404).json({ error: 'Viewer device not found' });
+});
+
+router.delete('/known-viewers/:id', (req, res) => {
+  const success = knownViewerService.deleteKnownViewer(req.params.id);
+  if (success) res.status(204).end();
+  else res.status(404).json({ error: 'Viewer device not found' });
 });
 
 module.exports = router;
