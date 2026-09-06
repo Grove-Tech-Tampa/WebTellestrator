@@ -28,29 +28,38 @@ const defaultViewers = [
   }
 ];
 
+// In-memory cache to prevent frequent disk writes
+let cachedViewers = null;
+let lastDiskWriteTime = 0;
+
 function readJSON(filepath, defaultData) {
+  if (cachedViewers) return cachedViewers;
   try {
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
     if (fs.existsSync(filepath)) {
       const raw = fs.readFileSync(filepath, 'utf8');
-      return JSON.parse(raw);
+      cachedViewers = JSON.parse(raw);
+      return cachedViewers;
     }
   } catch (err) {
     console.error(`Error reading ${filepath}:`, err);
   }
   // Initialize default file if missing
+  cachedViewers = defaultData;
   writeJSON(filepath, defaultData);
   return defaultData;
 }
 
 function writeJSON(filepath, data) {
+  cachedViewers = data;
   try {
     if (!fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
     fs.writeFileSync(filepath, JSON.stringify(data, null, 2), 'utf8');
+    lastDiskWriteTime = Date.now();
   } catch (err) {
     console.error(`Error writing ${filepath}:`, err);
   }
@@ -129,9 +138,17 @@ class KnownViewerService {
     const viewers = this.getAllKnownViewers();
     const viewer = viewers.find(v => v.pin === pin);
     if (viewer) {
-      viewer.lastSeen = new Date().toISOString();
+      const now = new Date();
+      const last = viewer.lastSeen ? new Date(viewer.lastSeen) : 0;
+      const timeDiff = (now - last) / 1000;
+      
+      viewer.lastSeen = now.toISOString();
       if (ip) viewer.lastIp = ip;
-      writeJSON(knownViewersPath, viewers);
+
+      // Throttle disk writes: only persist to JSON if > 60 seconds have elapsed or IP changed
+      if (timeDiff > 60 || (ip && viewer.lastIp !== ip)) {
+        writeJSON(knownViewersPath, viewers);
+      }
       return viewer;
     }
     return null;
