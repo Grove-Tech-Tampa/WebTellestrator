@@ -7,7 +7,7 @@ export class BrushEngine {
     return {
       x: point.x * ctx.canvas.width,
       y: point.y * ctx.canvas.height,
-      pressure: point.pressure !== undefined ? point.pressure : 0.5
+      pressure: (point.pressure !== undefined && point.pressure > 0) ? point.pressure : 0.5
     };
   }
 
@@ -33,15 +33,15 @@ export class BrushEngine {
           ctx.globalAlpha = opacity !== undefined ? opacity : 1.0;
           break;
         case 'pencil':
-          ctx.lineWidth = pSize * 0.6; // Thinner
+          ctx.lineWidth = pSize * 0.6;
           ctx.globalAlpha = opacity !== undefined ? opacity : 0.85;
           break;
         case 'marker':
-          ctx.lineWidth = pSize * 2.0; // Wider
+          ctx.lineWidth = pSize * 2.0;
           ctx.globalAlpha = opacity !== undefined ? opacity : 0.4;
           break;
         case 'brush':
-          // Width handled in continueStroke
+          ctx.lineWidth = pSize;
           ctx.globalAlpha = opacity !== undefined ? opacity : 0.9;
           break;
         default:
@@ -52,27 +52,37 @@ export class BrushEngine {
   }
 
   static continueStroke(ctx, fromPoint, toPoint, controlPoint, config) {
-    const { tool, size, pressureSensitivity = 0.5 } = config;
+    const { tool, size, usePressure = true } = config;
     const pSize = BrushEngine.getPixelSize(ctx, size);
     
     const pFrom = BrushEngine.getPixelPoint(ctx, fromPoint);
     const pTo = BrushEngine.getPixelPoint(ctx, toPoint);
     const pCp = BrushEngine.getPixelPoint(ctx, controlPoint);
     
-    const pressure = (pFrom.pressure + pTo.pressure) / 2;
-    
-    if (tool === 'brush') {
-      ctx.lineWidth = pSize * (0.2 + pressure * pressureSensitivity * 2);
-    } else if (tool === 'pen' || tool === 'eraser') {
-      // slight pressure sensitivity for pen
-      ctx.lineWidth = pSize * (0.8 + pressure * pressureSensitivity * 0.4);
+    const rawPressure = (pFrom.pressure + pTo.pressure) / 2;
+    const pressure = usePressure ? rawPressure : 0.5;
+
+    if (usePressure) {
+      if (tool === 'brush') {
+        ctx.lineWidth = pSize * (0.3 + pressure * 1.4);
+      } else if (tool === 'pen' || tool === 'eraser') {
+        ctx.lineWidth = pSize * (0.4 + pressure * 1.2);
+      } else if (tool === 'pencil') {
+        ctx.lineWidth = pSize * 0.6 * (0.5 + pressure * 1.0);
+      } else if (tool === 'marker') {
+        ctx.lineWidth = pSize * 2.0 * (0.7 + pressure * 0.6);
+      }
+    } else {
+      if (tool === 'brush') ctx.lineWidth = pSize;
+      else if (tool === 'pen' || tool === 'eraser') ctx.lineWidth = pSize;
+      else if (tool === 'pencil') ctx.lineWidth = pSize * 0.6;
+      else if (tool === 'marker') ctx.lineWidth = pSize * 2.0;
     }
 
     ctx.beginPath();
     ctx.moveTo(pFrom.x, pFrom.y);
 
     if (tool === 'pencil') {
-      // Add slight randomness to control point for rough edge effect
       const noise = pSize * 0.2;
       const rx = (Math.random() - 0.5) * noise;
       const ry = (Math.random() - 0.5) * noise;
@@ -92,7 +102,7 @@ export class BrushEngine {
   }
 
   static drawDot(ctx, point, config) {
-    const { tool, color, size, opacity } = config;
+    const { tool, color, size, opacity, usePressure = true } = config;
     const pSize = BrushEngine.getPixelSize(ctx, size);
     const pPt = BrushEngine.getPixelPoint(ctx, point);
     
@@ -114,18 +124,18 @@ export class BrushEngine {
         case 'brush':
           ctx.globalAlpha = opacity !== undefined ? opacity : 0.9;
           break;
-        default: // pen
+        default:
           ctx.globalAlpha = opacity !== undefined ? opacity : 1.0;
       }
     }
 
-    const pressure = pPt.pressure;
+    const pressure = usePressure ? pPt.pressure : 0.5;
     let radius = pSize / 2;
     
-    if (tool === 'marker') radius = pSize;
-    else if (tool === 'pencil') radius = pSize * 0.3;
-    else if (tool === 'brush') radius = (pSize / 2) * (0.2 + pressure * 1.0);
-    else if (tool === 'pen') radius = (pSize / 2) * (0.8 + pressure * 0.4);
+    if (tool === 'marker') radius = pSize * (usePressure ? (0.7 + pressure * 0.6) : 1.0);
+    else if (tool === 'pencil') radius = pSize * 0.3 * (usePressure ? (0.5 + pressure * 1.0) : 1.0);
+    else if (tool === 'brush') radius = (pSize / 2) * (usePressure ? (0.3 + pressure * 1.4) : 1.0);
+    else if (tool === 'pen' || tool === 'eraser') radius = (pSize / 2) * (usePressure ? (0.4 + pressure * 1.2) : 1.0);
 
     ctx.beginPath();
     ctx.arc(pPt.x, pPt.y, radius, 0, Math.PI * 2);
