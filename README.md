@@ -28,8 +28,9 @@ An iPad on stage serves as the **Presenter** interface for drawing over sermon s
   - Drawings are automatically saved per slide. Navigating away from an image preserves its annotations; navigating back restores them seamlessly on both Presenter and Viewer screens.
 - **👆 Mobile & iPad Gesture Navigation**:
   - Next/Previous slide buttons or 2-finger / screen-edge swipe gestures.
-- **🔐 PIN Session System**:
-  - Simple PIN-based presentation room creation. Presenter and Viewer join using the same numeric PIN.
+- **🔐 PIN Session & Registered Viewer Targets**:
+  - Registered persistent viewer machines (e.g., *"Spurgeon"* PIN `1001`, *"Whitfield"* PIN `1002`). Presenters can launch directly with one tap on stage without typing PINs.
+  - Live green **Online** / **Offline** status indicators for all production targets.
 - **🖥️ Chrome-Less Viewer Output**:
   - Pure, full-viewport canvas mirror with no toolbars or UI elements — optimized for ProPresenter Web Objects or NDI streams.
 
