@@ -94,17 +94,28 @@ docker run -d \
 
 ## 🔄 Automated CI/CD Pipeline (GitHub Actions)
 
-This repository includes a full CI/CD pipeline configured in `.github/workflows/deploy.yml`:
+This repository includes a full CI/CD pipeline configured in `.github/workflows/deploy.yml` that builds and deploys on PR merge to `main`.
 
-### CI/CD Workflow Steps:
-1. **On PR Merge to `main`**:
-   - **Validate**: Checks code syntax and verifies server entry point.
-   - **Build & Push**: Builds production Docker image and publishes it to GitHub Container Registry (`ghcr.io/grove-tech-tampa/webtellestrator:latest`).
-   - **Deploy**: Connects via SSH to your Proxmox Docker server, pulls the new container image, gracefully recreates the container, and prunes unused images.
+### 🛡️ Deploying to an Internal Proxmox Server (Behind NAT / Firewall)
 
-### Required GitHub Repository Secrets:
+If your Proxmox server is on an internal local network (e.g. `192.168.x.x` or `10.x.x.x`), **you DO NOT need to open SSH ports or set up router port forwarding!**
 
-To enable automated deployment to your Proxmox server, add the following under **GitHub Repository ➔ Settings ➔ Secrets and variables ➔ Actions**:
+#### Option 1: GitHub Self-Hosted Runner on Proxmox (RECOMMENDED — 0 Open Ports ⭐)
+1. In your GitHub Repository, go to **Settings ➔ Actions ➔ Runners ➔ New self-hosted runner**.
+2. Select **Linux** and run the provided 3-line setup script inside your Proxmox LXC container or VM:
+   ```bash
+   # Download & configure runner inside Proxmox container
+   mkdir actions-runner && cd actions-runner
+   curl -o actions-runner-linux-x64.tar.gz -L https://github.com/...
+   tar xzf ./actions-runner-linux-x64.tar.gz
+   ./config.sh --url https://github.com/Grove-Tech-Tampa/WebTellestrator --token <YOUR_TOKEN>
+   sudo ./svc.sh install && sudo ./svc.sh start
+   ```
+3. The runner communicates via **outbound-only HTTPS** to GitHub. Whenever a PR merges to `main`, the local runner automatically pulls the new Docker image and updates the application locally!
+
+#### Option 2: SSH Deployment (For Public IPs, Tailscale, or Port-Forwarded SSH)
+If using SSH, configure the following secrets under **GitHub Repository ➔ Settings ➔ Secrets and variables ➔ Actions**:
+- Set Repository Variable `ENABLE_SSH_DEPLOY` = `true`.
 
 | Secret Name | Description | Example |
 | :--- | :--- | :--- |

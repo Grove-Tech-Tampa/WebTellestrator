@@ -74,12 +74,48 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # 3. Deploy Container to Proxmox Server via SSH
-  deploy:
-    name: Deploy to Proxmox Server
+  # 3A. Deploy via Self-Hosted Runner on Proxmox (No Open Ports / No SSH Required!)
+  deploy-self-hosted:
+    name: Deploy via Self-Hosted Proxmox Runner
+    needs: build-and-push
+    runs-on: self-hosted
+    if: github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Deploy Container Locally on Proxmox
+        run: |
+          echo "Starting Telestrator container deployment via Self-Hosted Runner..."
+          
+          # Log in to GitHub Container Registry
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u "${{ github.actor }}" --password-stdin || true
+          
+          # Pull latest production container image
+          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          
+          # Stop existing container if running
+          docker stop telestrator || true
+          docker rm telestrator || true
+          
+          # Run updated container with volume persistence
+          docker run -d \
+            --name telestrator \
+            --restart unless-stopped \
+            -p 3000:3000 \
+            -v telestrator-data:/app/server/data \
+            -v telestrator-uploads:/app/public/uploads \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          
+          # Clean up old unused images
+          docker image prune -f
+          
+          echo "Self-Hosted Deployment completed successfully!"
+
+  # 3B. Deploy via Remote SSH (Fallback for Public IPs / Cloudflare Tunnels / Port Forwarded SSH)
+  deploy-ssh:
+    name: Deploy via SSH (Remote)
     needs: build-and-push
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && vars.ENABLE_SSH_DEPLOY == 'true'
 
     steps:
       - name: Execute Remote Deployment via SSH
@@ -92,22 +128,16 @@ jobs:
           script: |
             echo "Starting Telestrator container deployment on Proxmox..."
             
-            # Target deployment directory
             TARGET_DIR="${{ secrets.PROXMOX_DEPLOY_PATH || '/opt/telestrator' }}"
             mkdir -p "$TARGET_DIR"
             cd "$TARGET_DIR"
             
-            # Log in to GitHub Container Registry
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u "${{ github.actor }}" --password-stdin || true
-            
-            # Pull latest production container image
             docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
             
-            # Stop existing container if running
             docker stop telestrator || true
             docker rm telestrator || true
             
-            # Run updated container with volume persistence
             docker run -d \
               --name telestrator \
               --restart unless-stopped \
@@ -116,7 +146,5 @@ jobs:
               -v telestrator-uploads:/app/public/uploads \
               ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
             
-            # Clean up old unused images
             docker image prune -f
-            
-            echo "Deployment completed successfully!"
+            echo "SSH Deployment completed successfully!"
