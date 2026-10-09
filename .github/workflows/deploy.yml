@@ -8,7 +8,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   # 1. Validation & Build Test
@@ -58,7 +57,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          images: ${{ env.REGISTRY }}/${{ github.repository }}
           tags: |
             type=raw,value=latest,enable=true
             type=sha,format=short
@@ -86,11 +85,16 @@ jobs:
         run: |
           echo "Starting Telestrator container deployment via Self-Hosted Runner..."
           
+          # Convert repository name to lowercase for Docker compatibility
+          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          IMAGE_FULL="${{ env.REGISTRY }}/$REPO_LOWER:latest"
+          
           # Log in to GitHub Container Registry
           echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u "${{ github.actor }}" --password-stdin || true
           
           # Pull latest production container image
-          docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          echo "Pulling $IMAGE_FULL..."
+          docker pull "$IMAGE_FULL"
           
           # Stop existing container if running
           docker stop telestrator || true
@@ -103,7 +107,7 @@ jobs:
             -p 3000:3000 \
             -v telestrator-data:/app/server/data \
             -v telestrator-uploads:/app/public/uploads \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            "$IMAGE_FULL"
           
           # Clean up old unused images
           docker image prune -f
@@ -132,8 +136,11 @@ jobs:
             mkdir -p "$TARGET_DIR"
             cd "$TARGET_DIR"
             
+            REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+            IMAGE_FULL="${{ env.REGISTRY }}/$REPO_LOWER:latest"
+            
             echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u "${{ github.actor }}" --password-stdin || true
-            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            docker pull "$IMAGE_FULL"
             
             docker stop telestrator || true
             docker rm telestrator || true
@@ -144,7 +151,7 @@ jobs:
               -p 3000:3000 \
               -v telestrator-data:/app/server/data \
               -v telestrator-uploads:/app/public/uploads \
-              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+              "$IMAGE_FULL"
             
             docker image prune -f
             echo "SSH Deployment completed successfully!"
