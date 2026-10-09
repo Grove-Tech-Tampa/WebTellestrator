@@ -1,0 +1,18 @@
+[
+  {
+    "id": "v_spurgeon",
+    "name": "Spurgeon",
+    "pin": "1001",
+    "createdAt": "2026-09-06T18:45:15.926Z",
+    "lastSeen": null,
+    "lastIp": null
+  },
+  {
+    "id": "v_whitfield",
+    "name": "Whitfield",
+    "pin": "1002",
+    "createdAt": "2026-09-06T18:45:15.929Z",
+    "lastSeen": "2026-09-06T19:15:35.668Z",
+    "lastIp": "::ffff:10.30.0.121"
+  }
+]

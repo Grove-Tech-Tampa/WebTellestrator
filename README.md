@@ -10,10 +10,11 @@ An iPad on stage serves as the **Presenter** interface for drawing over sermon s
 
 - **⚡ Near-Zero-Lag Sync**: Real-time vector stroke synchronization over WebSocket (<10ms latency on local WiFi).
 - **🎭 Native ProPresenter 7 Integration**: Add the Viewer URL (`http://<server-ip>:3000/viewer.html?pin=XXXX`) directly onto any ProPresenter slide as a Web Element.
+- **📺 Registered Viewer Target Computers**: Register persistent viewer machines (e.g., *"Spurgeon"* PIN `1001`, *"Whitfield"* PIN `1002`). Presenters can launch directly with one tap on stage without typing PINs. Includes live green **Online** / **Offline** status indicators.
 - **📱 Apple Pencil & iPad Optimized**:
   - 240Hz ProMotion coalesced events for silky-smooth curves.
-  - Pressure sensitivity & tilt telemetry support.
-  - Palm rejection & Apple Pencil hover protection.
+  - Variable pressure sensitivity & constant pen size toggle.
+  - Palm rejection & gesture callout/selection suppression.
   - iPad input toggles: Enable/Disable Finger Drawing or Stylus input independently in settings.
 - **🎨 Complete Telestration Tools**:
   - **5 Drawing Instruments**: Pen (✒️), Pencil (✏️), Marker (🖍️), Brush (🖌️), and Eraser (🧽).
@@ -28,112 +29,165 @@ An iPad on stage serves as the **Presenter** interface for drawing over sermon s
   - Drawings are automatically saved per slide. Navigating away from an image preserves its annotations; navigating back restores them seamlessly on both Presenter and Viewer screens.
 - **👆 Mobile & iPad Gesture Navigation**:
   - Next/Previous slide buttons or 2-finger / screen-edge swipe gestures.
-- **🔐 PIN Session System**:
-  - Simple PIN-based presentation room creation. Presenter and Viewer join using the same numeric PIN.
-- **🖥️ Chrome-Less Viewer Output**:
-  - Pure, full-viewport canvas mirror with no toolbars or UI elements — optimized for ProPresenter Web Objects or NDI streams.
+- **🐳 Containerized & Full CI/CD**:
+  - Ready for Docker & Proxmox LXC/VM deployment with persistent storage volumes.
+  - Full GitHub Actions CI/CD pipeline automated on PR merge to `main`.
 
 ---
 
 ## 📋 System Requirements & Prerequisites
 
 1. **Host Machine (Server)**:
-   - **Node.js**: LTS version (v18.x, v20.x, or v22.x recommended).
-   - **Operating System**: macOS, Windows 10/11, or Linux.
+   - **Docker / Proxmox VE** (or Node.js v18+ LTS).
 2. **Presenter Device (Stage)**:
    - Apple iPad running Safari (iPadOS 14+) with Apple Pencil or finger touch.
 3. **Viewer / Production Display**:
-   - ProPresenter 7 (macOS or Windows) on the production computer.
+   - ProPresenter 7 (macOS or Windows) on production computer(s).
 4. **Network**:
-   - Local Area Network (Wi-Fi or Ethernet) connecting the iPad and the ProPresenter computer.
+   - Local Area Network (Wi-Fi or Ethernet) connecting the iPad and production computers.
 
 ---
 
-## 🚀 Quick Start Guide
+## 🚀 Deployment Options
 
-### 1. Installation
-
-Clone or extract the project files into your workspace directory:
+### Option A: Local Node.js Development
 
 ```bash
-cd TellestratorDev
+# Clone repository
+git clone https://github.com/Grove-Tech-Tampa/WebTellestrator.git
+cd WebTellestrator
+
+# Install dependencies and start
 npm install
-```
-
-### 2. Launch the Server
-
-Start the Telestrator backend server:
-
-```bash
 npm start
 ```
 
-The server output will log your local IP address:
+---
 
-```text
-Server listening on port 3000
-Local Network IPs:
-  http://192.168.1.50:3000
+### Option B: Docker & Docker Compose (Proxmox VE / Server)
+
+Run directly on your Proxmox server or Docker host:
+
+```bash
+# Build and launch with volume persistence
+docker compose up -d
 ```
+
+Or using standard Docker CLI:
+
+```bash
+# Create persistent storage volumes
+docker volume create telestrator-data
+docker volume create telestrator-uploads
+
+# Run container
+docker run -d \
+  --name telestrator \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  -v telestrator-data:/app/server/data \
+  -v telestrator-uploads:/app/public/uploads \
+  ghcr.io/grove-tech-tampa/webtellestrator:latest
+```
+
+---
+
+## 🔄 Automated CI/CD Pipeline (GitHub Actions)
+
+This repository includes a full CI/CD pipeline configured in `.github/workflows/deploy.yml` that builds and deploys on PR merge to `main`.
+
+### 🛡️ Deploying to an Internal Proxmox Server (Behind NAT / Firewall)
+
+If your Proxmox server is on an internal local network (e.g. `192.168.x.x` or `10.x.x.x`), **you DO NOT need to open SSH ports or set up router port forwarding!**
+
+#### Option 1: GitHub Self-Hosted Runner on Proxmox (RECOMMENDED — 0 Open Ports ⭐)
+1. In your GitHub Repository, go to **Settings ➔ Actions ➔ Runners ➔ New self-hosted runner**.
+2. Select **Linux** and run the provided 3-line setup script inside your Proxmox LXC container or VM:
+   ```bash
+   # Download & configure runner inside Proxmox container
+   mkdir actions-runner && cd actions-runner
+   curl -o actions-runner-linux-x64.tar.gz -L https://github.com/...
+   tar xzf ./actions-runner-linux-x64.tar.gz
+   ./config.sh --url https://github.com/Grove-Tech-Tampa/WebTellestrator --token <YOUR_TOKEN>
+   sudo ./svc.sh install && sudo ./svc.sh start
+   ```
+3. The runner communicates via **outbound-only HTTPS** to GitHub. Whenever a PR merges to `main`, the local runner automatically pulls the new Docker image and updates the application locally!
+
+#### Option 2: SSH Deployment (For Public IPs, Tailscale, or Port-Forwarded SSH)
+If using SSH, configure the following secrets under **GitHub Repository ➔ Settings ➔ Secrets and variables ➔ Actions**:
+- Set Repository Variable `ENABLE_SSH_DEPLOY` = `true`.
+
+| Secret Name | Description | Example |
+| :--- | :--- | :--- |
+| `PROXMOX_HOST` | IP address or hostname of Proxmox server | `192.168.1.100` |
+| `PROXMOX_USER` | SSH username on Proxmox server | `root` or `deploy` |
+| `PROXMOX_SSH_KEY` | Private SSH key for authentication | `-----BEGIN OPENSSH PRIVATE KEY-----...` |
+| `PROXMOX_PORT` | *(Optional)* SSH port (default `22`) | `22` |
+| `PROXMOX_DEPLOY_PATH` | *(Optional)* Target directory on Proxmox | `/opt/telestrator` |
 
 ---
 
 ## 📖 Usage & Workflow
 
 ### 1. Host Landing Page
-Navigate to `http://localhost:3000` (or `http://<your-ip>:3000` from any device on your local network).
-- Enter a 4-to-6 digit numeric **PIN** (e.g. `3661`).
-- Click **Present** on the iPad, or click **View** on the production computer.
+Navigate to `http://localhost:3000` (or `http://<server-ip>:3000`).
+- **One-Tap Target Selection**: Tap **Present on Spurgeon** or **Present on Whitfield** to launch directly for that production machine.
+- **Custom Session PIN**: Enter any custom PIN to create a temporary presentation room.
 
 ---
 
 ### 2. Presenter Mode (iPad on Stage)
-URL: `http://<server-ip>:3000/presenter.html?pin=3661`
+URL: `http://<server-ip>:3000/presenter.html?pin=1001`
 
-1. **Open Library**: Tap the **📚 Library** icon on the bottom floating dock to slide out the collection manager.
-2. **Upload & Select Slides**: Create a collection (e.g., *"Sunday Sermon"*), drop in photos, and tap a thumbnail to display it.
+1. **Open Library**: Tap **📚 Library** on the bottom dock to open collections.
+2. **Upload & Select Slides**: Drop in sermon graphics and tap a slide thumbnail.
 3. **Draw & Annotate**:
    - Select tools: Pen ✒️, Pencil ✏️, Marker 🖍️, Brush 🖌️, Eraser 🧽, or Stamps ⬡.
    - Tap **`🔄#1`** in the stamp picker to reset numbered markers back to `1`.
-   - Adjust stroke size and opacity via the floating dock sliders.
-4. **Navigate Slides**: Tap the **‹ Previous** / **Next ➔** edge buttons, or swipe left/right with 2 fingers anywhere on screen.
-5. **iPad Input Settings (⚙️)**: Tap the Settings Gear to enable or disable Finger Touch Drawing vs. Apple Pencil Stylus input independently.
+4. **Navigate Slides**: Tap navigation arrows or swipe left/right with 2 fingers anywhere on screen.
+5. **Settings (⚙️)**: Toggle Finger Drawing, Apple Pencil Input, or Pencil Pressure Sensitivity independently.
 
 ---
 
 ### 3. ProPresenter 7 Integration (NATIVE & DIRECT)
 
-No Syphon or external screen capture software is needed! You can embed the Viewer canvas directly into ProPresenter as a native **Web Element**.
+No Syphon or external screen capture software is needed! Embed the Viewer canvas directly into ProPresenter as a native **Web Element**.
 
 #### 🎥 Adding Viewer as a Web Element in ProPresenter 7:
 
 1. Open **ProPresenter 7** on your production computer.
-2. Edit an existing slide or create a new slide/presentation for Telestration.
+2. Edit an existing slide or create a new slide for Telestration.
 3. Click **+ Add Element** in the Slide Editor ➔ Select **Web**.
 4. In the Inspector sidebar for the Web Element:
-   - Set **URL** to: `http://localhost:3000/viewer.html?pin=3661`  
-     *(or `http://<server-ip>:3000/viewer.html?pin=3661` if running on a separate machine)*.
-   - Adjust the Web Element size to **1920 x 1080** (full 16:9 canvas).
-5. Trigger the slide! ProPresenter will display the live telestrator canvas and background images natively on screen.
+   - Set **URL** to: `http://<server-ip>:3000/viewer.html?pin=1001`
+   - Adjust Web Element size to **1920 x 1080** (full 16:9 canvas).
+5. Trigger the slide! ProPresenter displays the live telestrator canvas and background images natively on screen.
 
 ---
 
 ## 📁 File Structure Overview
 
 ```
-TellestratorDev/
+WebTellestrator/
+├── Dockerfile                     # Production Node.js 20 Alpine container build
+├── docker-compose.yml             # Docker Compose orchestration with persistent volumes
+├── .dockerignore                  # Excluded Docker build context paths
+├── .github/
+│   └── workflows/
+│       └── deploy.yml             # Full CI/CD pipeline (Validate -> GHCR -> Proxmox SSH Deploy)
 ├── package.json                   # Project dependencies & scripts
-├── README.md                      # Project documentation
+├── README.md                      # Comprehensive project documentation
 ├── server/
 │   ├── index.js                   # Express HTTP & Socket.IO server entry
 │   ├── routes/
-│   │   ├── api.js                 # REST API for collections, reordering & favorites
+│   │   ├── api.js                 # REST API for collections, known viewers & favorites
 │   │   └── upload.js              # Image file upload handler (Multer)
 │   └── services/
 │       ├── socketService.js       # Real-time WebSocket session relaying & state storage
-│       └── collectionService.js   # Disk JSON storage for collections & favorites
+│       ├── collectionService.js   # Disk JSON storage for collections & favorites
+│       └── knownViewerService.js  # Registered viewer device persistence & status tracking
 └── public/
-    ├── index.html                 # App landing page & mode selector
+    ├── index.html                 # Landing page with registered viewer target cards
     ├── presenter.html             # Full presenter interface for iPad
     ├── viewer.html                # Chrome-less viewer canvas for ProPresenter
     ├── css/
@@ -146,7 +200,7 @@ TellestratorDev/
         │   └── SocketClient.js    # Client-side Socket.IO wrapper & reconnect logic
         ├── canvas/
         │   ├── DrawingEngine.js   # Dual HTML5 canvas, Apple Pencil 240Hz & gesture engine
-        │   ├── BrushEngine.js     # 5 brush rendering algorithms
+        │   ├── BrushEngine.js     # 5 brush rendering algorithms with pressure scaling
         │   ├── StampEngine.js     # Vector shape & numbered marker renderer
         │   └── CanvasHistory.js   # Per-slide snapshot undo/redo manager
         ├── presenter/
