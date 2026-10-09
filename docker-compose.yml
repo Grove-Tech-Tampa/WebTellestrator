@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  telestrator:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghcr.io/grove-tech-tampa/webtellestrator:latest
+    container_name: telestrator
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    volumes:
+      - telestrator-data:/app/server/data
+      - telestrator-uploads:/app/public/uploads
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  telestrator-data:
+    driver: local
+  telestrator-uploads:
+    driver: local
