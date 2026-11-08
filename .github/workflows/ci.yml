@@ -6,16 +6,18 @@ on:
       - main
       - develop
 
-# Strictly least-privilege: read-only access to repository contents, no write scopes
+# Workflow root: Read-only access by default
 permissions:
   contents: read
 
 jobs:
   # Isolated validation on GitHub-hosted cloud runners
-  # No secrets, no self-hosted runners, isolated from your internal infrastructure
   validate:
     name: Validate Code
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4

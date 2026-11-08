@@ -20,7 +20,7 @@ on:
         required: false
         default: ''
 
-# Least-privilege permissions by default
+# Root permissions fallback: Read-only access by default
 permissions:
   contents: read
 
@@ -32,6 +32,9 @@ jobs:
   validate:
     name: Validate Code
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -53,6 +56,8 @@ jobs:
     name: Resolve Target Environment
     needs: validate
     runs-on: ubuntu-latest
+    permissions: {}
+
     outputs:
       target_env: ${{ steps.resolve.outputs.target_env }}
       host_port: ${{ steps.resolve.outputs.host_port }}
@@ -149,6 +154,8 @@ jobs:
     name: Deploy via Self-Hosted Proxmox Runner
     needs: [build-and-push, set-environment]
     runs-on: self-hosted
+    permissions:
+      packages: read
     if: |
       always() &&
       needs.build-and-push.result == 'success' &&
