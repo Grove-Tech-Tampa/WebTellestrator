@@ -4,7 +4,25 @@ on:
   push:
     branches:
       - main
+      - develop
   workflow_dispatch:
+    inputs:
+      target_env:
+        description: 'Target Deployment Environment'
+        required: true
+        default: 'prelive'
+        type: choice
+        options:
+          - prelive
+          - live
+      port_override:
+        description: 'Host port override (leave blank to use defaults: 3000 for live, 3001 for prelive)'
+        required: false
+        default: ''
+
+# Least-privilege permissions by default
+permissions:
+  contents: read
 
 env:
   REGISTRY: ghcr.io
@@ -30,10 +48,63 @@ jobs:
       - name: Validate Server Syntax
         run: node --check server/index.js
 
-  # 2. Build and Push Docker Image to GHCR
+  # 2. Determine Deployment Target Configuration
+  set-environment:
+    name: Resolve Target Environment
+    needs: validate
+    runs-on: ubuntu-latest
+    outputs:
+      target_env: ${{ steps.resolve.outputs.target_env }}
+      host_port: ${{ steps.resolve.outputs.host_port }}
+      container_name: ${{ steps.resolve.outputs.container_name }}
+      volume_data: ${{ steps.resolve.outputs.volume_data }}
+      volume_uploads: ${{ steps.resolve.outputs.volume_uploads }}
+      image_tag: ${{ steps.resolve.outputs.image_tag }}
+    steps:
+      - id: resolve
+        name: Set Environment Parameters
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF: ${{ github.ref }}
+          INPUT_TARGET: ${{ inputs.target_env }}
+          CUSTOM_PORT: ${{ inputs.port_override }}
+          DEFAULT_LIVE_PORT: ${{ vars.LIVE_PORT || '3000' }}
+          DEFAULT_PRELIVE_PORT: ${{ vars.PRELIVE_PORT || '3001' }}
+        run: |
+          # Determine target:
+          # - workflow_dispatch: uses explicit user input
+          # - push to main: deploys to live release
+          # - push to develop: deploys to prelive/alpha
+          TARGET="prelive"
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            TARGET="$INPUT_TARGET"
+          elif [ "$EVENT_NAME" = "push" ] && [ "$REF" = "refs/heads/main" ]; then
+            TARGET="live"
+          fi
+
+          echo "Deployment target resolved to: $TARGET"
+          echo "target_env=$TARGET" >> "$GITHUB_OUTPUT"
+
+          if [ "$TARGET" = "live" ]; then
+            PORT="${CUSTOM_PORT:-$DEFAULT_LIVE_PORT}"
+            echo "host_port=$PORT" >> "$GITHUB_OUTPUT"
+            echo "container_name=telestrator" >> "$GITHUB_OUTPUT"
+            echo "volume_data=telestrator-data" >> "$GITHUB_OUTPUT"
+            echo "volume_uploads=telestrator-uploads" >> "$GITHUB_OUTPUT"
+            echo "image_tag=latest" >> "$GITHUB_OUTPUT"
+          else
+            PORT="${CUSTOM_PORT:-$DEFAULT_PRELIVE_PORT}"
+            echo "host_port=$PORT" >> "$GITHUB_OUTPUT"
+            echo "container_name=telestrator-prelive" >> "$GITHUB_OUTPUT"
+            echo "volume_data=telestrator-prelive-data" >> "$GITHUB_OUTPUT"
+            echo "volume_uploads=telestrator-prelive-uploads" >> "$GITHUB_OUTPUT"
+            echo "image_tag=prelive" >> "$GITHUB_OUTPUT"
+          fi
+
+  # 3. Build and Push Docker Image to GHCR
   build-and-push:
     name: Build & Push Docker Image
-    needs: validate
+    needs: [validate, set-environment]
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -59,7 +130,7 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ github.repository }}
           tags: |
-            type=raw,value=latest,enable=true
+            type=raw,value=${{ needs.set-environment.outputs.image_tag }},enable=true
             type=sha,format=short
 
       - name: Build and Push Docker Image
@@ -73,85 +144,62 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  # 3A. Deploy via Self-Hosted Runner on Proxmox (No Open Ports / No SSH Required!)
+  # 4. Deploy via Self-Hosted Runner on Proxmox
   deploy-self-hosted:
     name: Deploy via Self-Hosted Proxmox Runner
-    needs: build-and-push
+    needs: [build-and-push, set-environment]
     runs-on: self-hosted
-    if: github.ref == 'refs/heads/main'
+    if: |
+      always() &&
+      needs.build-and-push.result == 'success' &&
+      vars.DISABLE_SELF_HOSTED_DEPLOY != 'true' &&
+      github.repository == 'Grove-Tech-Tampa/WebTellestrator'
 
     steps:
       - name: Deploy Container Locally on Proxmox
+        env:
+          TARGET_ENV: ${{ needs.set-environment.outputs.target_env }}
+          CONTAINER_NAME: ${{ needs.set-environment.outputs.container_name }}
+          HOST_PORT: ${{ needs.set-environment.outputs.host_port }}
+          VOL_DATA: ${{ needs.set-environment.outputs.volume_data }}
+          VOL_UPLOADS: ${{ needs.set-environment.outputs.volume_uploads }}
+          IMAGE_TAG: ${{ needs.set-environment.outputs.image_tag }}
+          GITHUB_REPO: ${{ github.repository }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "Starting Telestrator container deployment via Self-Hosted Runner..."
-          
-          # Convert repository name to lowercase for Docker compatibility
-          REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-          IMAGE_FULL="${{ env.REGISTRY }}/$REPO_LOWER:latest"
-          
-          # Log in to GitHub Container Registry
-          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u "${{ github.actor }}" --password-stdin || true
-          
-          # Pull latest production container image
+          echo "Starting Telestrator ($TARGET_ENV) container deployment via Self-Hosted Runner..."
+          echo "Container: $CONTAINER_NAME"
+          echo "Host Port: $HOST_PORT -> Container: 3000"
+          echo "Data Volume: $VOL_DATA"
+          echo "Uploads Volume: $VOL_UPLOADS"
+
+          REPO_LOWER=$(echo "$GITHUB_REPO" | tr '[:upper:]' '[:lower:]')
+          IMAGE_FULL="${REGISTRY}/$REPO_LOWER:$IMAGE_TAG"
+
+          # Log in to GitHub Container Registry safely
+          echo "$GH_TOKEN" | docker login "$REGISTRY" -u "$GITHUB_ACTOR" --password-stdin || true
+
+          # Pull target container image
           echo "Pulling $IMAGE_FULL..."
           docker pull "$IMAGE_FULL"
-          
-          # Stop existing container if running
-          docker stop telestrator || true
-          docker rm telestrator || true
-          
-          # Run updated container with volume persistence
+
+          # Stop and remove existing container for this environment only
+          docker stop "$CONTAINER_NAME" || true
+          docker rm "$CONTAINER_NAME" || true
+
+          # Run updated container with volume persistence and log bounds
           docker run -d \
-            --name telestrator \
+            --name "$CONTAINER_NAME" \
             --restart unless-stopped \
-            -p 3000:3000 \
-            -v telestrator-data:/app/server/data \
-            -v telestrator-uploads:/app/public/uploads \
+            -p "${HOST_PORT}:3000" \
+            -v "${VOL_DATA}:/app/server/data" \
+            -v "${VOL_UPLOADS}:/app/public/uploads" \
+            --log-opt max-size=10m \
+            --log-opt max-file=3 \
             "$IMAGE_FULL"
-          
+
           # Clean up old unused images
           docker image prune -f
-          
-          echo "Self-Hosted Deployment completed successfully!"
 
-  # 3B. Deploy via Remote SSH (Fallback for Public IPs / Cloudflare Tunnels / Port Forwarded SSH)
-  deploy-ssh:
-    name: Deploy via SSH (Remote)
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' && vars.ENABLE_SSH_DEPLOY == 'true'
-
-    steps:
-      - name: Execute Remote Deployment via SSH
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.PROXMOX_HOST }}
-          username: ${{ secrets.PROXMOX_USER }}
-          key: ${{ secrets.PROXMOX_SSH_KEY }}
-          port: ${{ secrets.PROXMOX_PORT || 22 }}
-          script: |
-            echo "Starting Telestrator container deployment on Proxmox..."
-            
-            TARGET_DIR="${{ secrets.PROXMOX_DEPLOY_PATH || '/opt/telestrator' }}"
-            mkdir -p "$TARGET_DIR"
-            cd "$TARGET_DIR"
-            
-            REPO_LOWER=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
-            IMAGE_FULL="${{ env.REGISTRY }}/$REPO_LOWER:latest"
-            
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u "${{ github.actor }}" --password-stdin || true
-            docker pull "$IMAGE_FULL"
-            
-            docker stop telestrator || true
-            docker rm telestrator || true
-            
-            docker run -d \
-              --name telestrator \
-              --restart unless-stopped \
-              -p 3000:3000 \
-              -v telestrator-data:/app/server/data \
-              -v telestrator-uploads:/app/public/uploads \
-              "$IMAGE_FULL"
-            
-            docker image prune -f
-            echo "SSH Deployment completed successfully!"
+          echo "Self-Hosted Deployment for $TARGET_ENV completed successfully on port $HOST_PORT!"

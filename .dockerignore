@@ -9,3 +9,7 @@ yarn-error.log*
 Dockerfile
 docker-compose.yml
 .env
+server/data/*.json
+!server/data/*.example.json
+public/uploads/*
+!public/uploads/.gitkeep

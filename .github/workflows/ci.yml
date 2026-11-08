@@ -1,0 +1,34 @@
+name: CI Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+# Strictly least-privilege: read-only access to repository contents, no write scopes
+permissions:
+  contents: read
+
+jobs:
+  # Isolated validation on GitHub-hosted cloud runners
+  # No secrets, no self-hosted runners, isolated from your internal infrastructure
+  validate:
+    name: Validate Code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        # --ignore-scripts prevents any untrusted package hook execution
+        run: npm ci --ignore-scripts
+
+      - name: Validate Server Syntax
+        run: node --check server/index.js

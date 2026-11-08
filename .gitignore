@@ -141,3 +141,10 @@ dist
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
 .vite/
+
+# Server runtime data & uploads (keep templates and directory structure)
+server/data/*.json
+!server/data/*.example.json
+!server/data/.gitkeep
+public/uploads/*
+!public/uploads/.gitkeep
