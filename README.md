@@ -32,6 +32,11 @@ An iPad on stage serves as the **Presenter** interface for drawing over sermon s
 - **🐳 Containerized & Full CI/CD**:
   - Ready for Docker & Proxmox LXC/VM deployment with persistent storage volumes.
   - Full GitHub Actions CI/CD pipeline automated on PR merge to `main`.
+- **🔐 PIN Session & Registered Viewer Targets**:
+  - Registered persistent viewer machines (e.g., *"Spurgeon"* PIN `1001`, *"Whitfield"* PIN `1002`). Presenters can launch directly with one tap on stage without typing PINs.
+  - Live green **Online** / **Offline** status indicators for all production targets.
+- **🖥️ Chrome-Less Viewer Output**:
+  - Pure, full-viewport canvas mirror with no toolbars or UI elements — optimized for ProPresenter Web Objects or NDI streams.
 
 ---
 
@@ -94,15 +99,19 @@ docker run -d \
 
 ## 🔄 Automated CI/CD Pipeline (GitHub Actions)
 
-This repository includes a full CI/CD pipeline configured in `.github/workflows/deploy.yml` that builds and deploys on PR merge to `main`.
+This repository includes an automated CI/CD pipeline configured for zero open inbound ports:
 
-### 🛡️ Deploying to an Internal Proxmox Server (Behind NAT / Firewall)
+- **Safe PR Validation (`ci.yml`)**: Automatically validates dependencies and syntax on Pull Requests targeting `develop` or `main` inside GitHub's ephemeral cloud sandbox (`ubuntu-latest`) with read-only permissions and no access to internal infrastructure.
+- **Prelive / Alpha Deployment (`deploy.yml`)**: Merging code into `develop` automatically builds container image `:prelive` and deploys container `telestrator-prelive` to **Port 3001** with isolated data volumes.
+- **Live Production Deployment (`deploy.yml`)**: Merging code into `main` automatically builds container image `:latest` and deploys container `telestrator` to **Port 3000** with production data volumes.
+- **Manual Dispatch**: Maintainers can deploy any commit or branch to either environment on demand with an optional port override.
 
-If your Proxmox server is on an internal local network (e.g. `192.168.x.x` or `10.x.x.x`), **you DO NOT need to open SSH ports or set up router port forwarding!**
+### 🛡️ GitHub Self-Hosted Runner on Proxmox (0 Open Inbound Ports ⭐)
 
-#### Option 1: GitHub Self-Hosted Runner on Proxmox (RECOMMENDED — 0 Open Ports ⭐)
+The runner communicates via **outbound-only HTTPS long-polling** to GitHub. You do **not** need to open firewall ports, configure router port-forwarding, or store SSH private keys in GitHub.
+
 1. In your GitHub Repository, go to **Settings ➔ Actions ➔ Runners ➔ New self-hosted runner**.
-2. Select **Linux** and run the provided 3-line setup script inside your Proxmox LXC container or VM:
+2. Select **Linux** and run the provided setup script inside your Proxmox LXC container or VM:
    ```bash
    # Download & configure runner inside Proxmox container
    mkdir actions-runner && cd actions-runner
@@ -111,19 +120,7 @@ If your Proxmox server is on an internal local network (e.g. `192.168.x.x` or `1
    ./config.sh --url https://github.com/Grove-Tech-Tampa/WebTellestrator --token <YOUR_TOKEN>
    sudo ./svc.sh install && sudo ./svc.sh start
    ```
-3. The runner communicates via **outbound-only HTTPS** to GitHub. Whenever a PR merges to `main`, the local runner automatically pulls the new Docker image and updates the application locally!
-
-#### Option 2: SSH Deployment (For Public IPs, Tailscale, or Port-Forwarded SSH)
-If using SSH, configure the following secrets under **GitHub Repository ➔ Settings ➔ Secrets and variables ➔ Actions**:
-- Set Repository Variable `ENABLE_SSH_DEPLOY` = `true`.
-
-| Secret Name | Description | Example |
-| :--- | :--- | :--- |
-| `PROXMOX_HOST` | IP address or hostname of Proxmox server | `192.168.1.100` |
-| `PROXMOX_USER` | SSH username on Proxmox server | `root` or `deploy` |
-| `PROXMOX_SSH_KEY` | Private SSH key for authentication | `-----BEGIN OPENSSH PRIVATE KEY-----...` |
-| `PROXMOX_PORT` | *(Optional)* SSH port (default `22`) | `22` |
-| `PROXMOX_DEPLOY_PATH` | *(Optional)* Target directory on Proxmox | `/opt/telestrator` |
+3. Whenever changes are merged to `develop` or `main`, the local runner automatically pulls the new container image from GHCR and refreshes the application seamlessly on Proxmox!
 
 ---
 
@@ -174,7 +171,8 @@ WebTellestrator/
 ├── .dockerignore                  # Excluded Docker build context paths
 ├── .github/
 │   └── workflows/
-│       └── deploy.yml             # Full CI/CD pipeline (Validate -> GHCR -> Proxmox SSH Deploy)
+│       ├── ci.yml                 # Safe PR validation in GitHub cloud sandbox
+│       └── deploy.yml             # Self-hosted deployment to Proxmox (Prelive on 3001, Live on 3000)
 ├── package.json                   # Project dependencies & scripts
 ├── README.md                      # Comprehensive project documentation
 ├── server/

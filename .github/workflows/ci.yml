@@ -1,0 +1,36 @@
+name: CI Validation
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+
+# Workflow root: Read-only access by default
+permissions:
+  contents: read
+
+jobs:
+  # Isolated validation on GitHub-hosted cloud runners
+  validate:
+    name: Validate Code
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        # --ignore-scripts prevents any untrusted package hook execution
+        run: npm ci --ignore-scripts
+
+      - name: Validate Server Syntax
+        run: node --check server/index.js

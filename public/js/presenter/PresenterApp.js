@@ -19,7 +19,25 @@ class PresenterApp {
       pin = Math.floor(1000 + Math.random() * 9000).toString();
       window.history.replaceState({}, '', `?pin=${pin}`);
     }
-    document.getElementById('pin-display').textContent = `PIN: ${pin}`;
+
+    let targetName = urlParams.get('target');
+    const pinDisplayEl = document.getElementById('pin-display');
+    if (pinDisplayEl) {
+      pinDisplayEl.textContent = targetName ? `Target: ${targetName} (PIN: ${pin})` : `PIN: ${pin}`;
+    }
+
+    // Try fetching known viewer name if not in URL
+    if (!targetName) {
+      fetch('/api/known-viewers')
+        .then(res => res.ok ? res.json() : [])
+        .then(viewers => {
+          const match = viewers.find(v => v.pin === pin);
+          if (match && pinDisplayEl) {
+            pinDisplayEl.textContent = `Target: ${match.name} (PIN: ${pin})`;
+          }
+        })
+        .catch(err => console.error(err));
+    }
 
     // 2. Setup Drawing Engine
     const canvasContainer = document.getElementById('canvas-container');

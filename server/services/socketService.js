@@ -1,3 +1,5 @@
+const knownViewerService = require('./knownViewerService');
+
 const EVENTS = {
   SESSION_CREATE: 'session:create',
   SESSION_JOIN: 'session:join',
@@ -20,7 +22,22 @@ const EVENTS = {
 
 const sessions = new Map();
 
-module.exports = function(io) {
+function isPinOnline(pin) {
+  const session = sessions.get(String(pin).trim());
+  return !!(session && session.viewers && session.viewers.size > 0);
+}
+
+function getPinSessionInfo(pin) {
+  const session = sessions.get(String(pin).trim());
+  if (!session) return { isOnline: false, viewerCount: 0, hasPresenter: false };
+  return {
+    isOnline: session.viewers.size > 0,
+    viewerCount: session.viewers.size,
+    hasPresenter: !!session.presenter
+  };
+}
+
+function initSocketService(io) {
   io.on('connection', (socket) => {
     console.log('Socket connected:', socket.id);
 
@@ -28,6 +45,7 @@ module.exports = function(io) {
       if (!data || !data.pin) return;
       const cleanPin = String(data.pin).trim();
       const role = data.role || 'viewer';
+      const clientIp = socket.handshake.address || socket.request.connection.remoteAddress;
       
       let session = sessions.get(cleanPin);
       if (!session) {
@@ -55,6 +73,9 @@ module.exports = function(io) {
         socket.emit(EVENTS.SESSION_JOINED, { role, pin: cleanPin });
         console.log(`[Viewer Joined] PIN: ${cleanPin}`);
         
+        // Touch lastSeen and IP for known viewers
+        knownViewerService.touchKnownViewer(cleanPin, clientIp);
+
         // Late-join support: send current image & annotations if available
         if (session.currentImageUrl) {
           const snapshot = session.annotationMap.get(session.currentImageId);
@@ -147,4 +168,9 @@ module.exports = function(io) {
       }
     });
   });
-};
+}
+
+initSocketService.isPinOnline = isPinOnline;
+initSocketService.getPinSessionInfo = getPinSessionInfo;
+
+module.exports = initSocketService;

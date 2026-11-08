@@ -13,83 +13,239 @@
       justify-content: center;
       min-height: 100vh;
       background: radial-gradient(circle at top, var(--bg-secondary) 0%, var(--bg-primary) 100%);
+      padding: 20px;
     }
     .landing-container {
-      max-width: 600px;
+      max-width: 680px;
       width: 100%;
-      padding: 40px 20px;
+      padding: 30px 20px;
       text-align: center;
       animation: slideUp 0.5s ease;
     }
     h1 {
-      font-size: 48px;
+      font-size: 44px;
       font-weight: 700;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       text-shadow: var(--shadow-glow);
       background: linear-gradient(135deg, #fff, var(--accent-blue));
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
     .subtitle {
-      font-size: 18px;
+      font-size: 16px;
       color: var(--text-secondary);
-      margin-bottom: 48px;
+      margin-bottom: 32px;
     }
+    
+    .section-title {
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .known-viewers-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 28px;
+    }
+    .viewer-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      text-align: left;
+      transition: all 0.2s ease;
+      position: relative;
+    }
+    .viewer-card:hover {
+      border-color: var(--border-active);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    .viewer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .viewer-name {
+      font-size: 17px;
+      font-weight: 600;
+      color: #fff;
+    }
+    .status-badge {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .status-badge.online {
+      background: rgba(52, 211, 153, 0.15);
+      color: var(--accent-green);
+      border: 1px solid rgba(52, 211, 153, 0.3);
+    }
+    .status-badge.offline {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-muted);
+      border: 1px solid var(--border-subtle);
+    }
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+    .viewer-pin {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+    .viewer-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .btn-target-present {
+      flex: 1;
+      padding: 8px;
+      background: var(--accent-blue);
+      color: #fff;
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      font-weight: 600;
+      text-align: center;
+      text-decoration: none;
+    }
+    .btn-target-view {
+      padding: 8px 12px;
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      border-radius: var(--radius-sm);
+      font-size: 13px;
+      text-decoration: none;
+    }
+
+    .pin-divider {
+      margin: 24px 0;
+      border-top: 1px dashed var(--border-subtle);
+      position: relative;
+    }
+    .pin-divider span {
+      position: absolute;
+      top: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg-primary);
+      padding: 0 12px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
     .pin-section {
-      margin-bottom: 40px;
+      margin-bottom: 24px;
     }
     .pin-input {
-      font-size: 24px;
+      font-size: 22px;
       text-align: center;
       letter-spacing: 4px;
-      padding: 12px 24px;
+      padding: 10px 20px;
       border-radius: var(--radius-sm);
       border: 1px solid var(--border-subtle);
       background: var(--bg-glass);
       color: var(--text-primary);
-      width: 200px;
+      width: 180px;
     }
     .pin-input:focus {
       outline: none;
       border-color: var(--accent-blue);
     }
+
     .modes {
       display: flex;
-      gap: 20px;
+      gap: 16px;
       justify-content: center;
     }
     .mode-card {
       background: var(--bg-surface);
       border: 1px solid var(--border-subtle);
-      border-radius: var(--radius-lg);
-      padding: 32px 24px;
+      border-radius: var(--radius-md);
+      padding: 20px 16px;
       flex: 1;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: all 0.2s ease;
       text-decoration: none;
       display: block;
       color: var(--text-primary);
     }
     .mode-card:hover {
-      transform: translateY(-5px);
+      transform: translateY(-3px);
       border-color: var(--border-active);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.3), inset 0 0 20px rgba(74,158,255,0.05);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
     }
     .mode-icon {
-      font-size: 48px;
-      margin-bottom: 16px;
-    }
-    .mode-title {
-      font-size: 20px;
-      font-weight: 600;
+      font-size: 32px;
       margin-bottom: 8px;
     }
+    .mode-title {
+      font-size: 16px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
     .mode-desc {
-      font-size: 14px;
+      font-size: 12px;
       color: var(--text-muted);
     }
+
+    /* Modal styles */
+    .manage-modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.75);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .manage-modal.show {
+      display: flex;
+    }
+    .manage-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      max-width: 500px;
+      width: 100%;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+      text-align: left;
+    }
+    .manage-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+    }
+    .manage-table th, .manage-table td {
+      padding: 10px;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 14px;
+    }
+    .manage-table th {
+      color: var(--text-secondary);
+      text-align: left;
+    }
+    
     .footer {
-      margin-top: 48px;
+      margin-top: 36px;
       font-size: 12px;
       color: var(--text-muted);
     }
@@ -100,6 +256,20 @@
     <h1>Telestrator</h1>
     <p class="subtitle">Real-time presentation telestration</p>
     
+    <div class="section-title">
+      <span>Registered Viewer Targets</span>
+      <button id="manage-devices-btn" style="color:var(--accent-blue); font-size:12px;">⚙️ Manage Targets</button>
+    </div>
+
+    <div class="known-viewers-grid" id="known-viewers-grid">
+      <!-- Populated dynamically via JS -->
+      <div style="color:var(--text-muted); font-size:13px; grid-column: 1/-1;">Loading viewer targets...</div>
+    </div>
+
+    <div class="pin-divider">
+      <span>OR CUSTOM SESSION PIN</span>
+    </div>
+
     <div class="pin-section">
       <input type="text" id="session-pin" class="pin-input" placeholder="PIN" maxlength="6" autocomplete="off">
     </div>
@@ -107,22 +277,180 @@
     <div class="modes">
       <a href="#" class="mode-card" id="present-link">
         <div class="mode-icon">🎨</div>
-        <div class="mode-title">Present</div>
-        <div class="mode-desc">Create and annotate presentations</div>
+        <div class="mode-title">Present Custom PIN</div>
+        <div class="mode-desc">Join or create room with PIN above</div>
       </a>
       <a href="#" class="mode-card" id="view-link">
         <div class="mode-icon">📺</div>
-        <div class="mode-title">View</div>
-        <div class="mode-desc">Watch the live presentation</div>
+        <div class="mode-title">View Custom PIN</div>
+        <div class="mode-desc">Watch presentation room with PIN above</div>
       </a>
     </div>
 
     <div class="footer">
-      Version 1.0.0
+      Telestrator v1.0.0
+    </div>
+  </div>
+
+  <!-- Manage Known Viewers Modal -->
+  <div class="manage-modal" id="manage-modal">
+    <div class="manage-card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <h3>Registered Viewer Targets</h3>
+        <button id="close-manage-btn" style="font-size:18px; color:var(--text-muted);">✕</button>
+      </div>
+
+      <div style="display:flex; gap:8px; margin-bottom:16px;">
+        <input type="text" id="new-device-name" placeholder="Target Name (e.g. Spurgeon)" style="flex:1; padding:8px 12px; background:var(--bg-primary); border:1px solid var(--border-subtle); color:#fff; border-radius:var(--radius-sm);">
+        <input type="text" id="new-device-pin" placeholder="PIN (e.g. 1001)" style="width:110px; padding:8px 12px; background:var(--bg-primary); border:1px solid var(--border-subtle); color:#fff; border-radius:var(--radius-sm); text-align:center;">
+        <button id="add-device-btn" style="padding:8px 14px; background:var(--accent-blue); color:#fff; border-radius:var(--radius-sm); font-size:13px; font-weight:600;">+ Add</button>
+      </div>
+
+      <table class="manage-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>PIN</th>
+            <th>Last Seen</th>
+            <th style="text-align:right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="manage-table-body">
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+
+      <button id="done-manage-btn" style="width:100%; padding:10px; background:var(--bg-tertiary); border-radius:var(--radius-sm); margin-top:8px;">Done</button>
     </div>
   </div>
 
   <script>
+    let knownViewers = [];
+
+    async function loadKnownViewers() {
+      try {
+        const res = await fetch('/api/known-viewers');
+        if (res.ok) {
+          knownViewers = await res.json();
+          renderKnownViewersGrid();
+          renderManageTable();
+        }
+      } catch (e) {
+        console.error('Failed to load known viewers', e);
+      }
+    }
+
+    function renderKnownViewersGrid() {
+      const grid = document.getElementById('known-viewers-grid');
+      if (!grid) return;
+      grid.innerHTML = '';
+
+      if (knownViewers.length === 0) {
+        grid.innerHTML = '<div style="color:var(--text-muted); font-size:13px; grid-column:1/-1;">No registered viewer targets found. Click "Manage Targets" to add one.</div>';
+        return;
+      }
+
+      knownViewers.forEach(v => {
+        const card = document.createElement('div');
+        card.className = 'viewer-card';
+
+        const isOnline = v.isOnline;
+        const statusClass = isOnline ? 'online' : 'offline';
+        const statusText = isOnline ? `Online (${v.viewerCount})` : 'Offline';
+
+        card.innerHTML = `
+          <div class="viewer-header">
+            <span class="viewer-name">${escapeHtml(v.name)}</span>
+            <span class="status-badge ${statusClass}">
+              <span class="status-dot"></span> ${statusText}
+            </span>
+          </div>
+          <div class="viewer-pin">PIN: <strong>${escapeHtml(v.pin)}</strong></div>
+          <div class="viewer-actions">
+            <a href="presenter.html?pin=${encodeURIComponent(v.pin)}&target=${encodeURIComponent(v.name)}" class="btn-target-present">Present on ${escapeHtml(v.name)}</a>
+            <a href="viewer.html?pin=${encodeURIComponent(v.pin)}&target=${encodeURIComponent(v.name)}" class="btn-target-view">View</a>
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function renderManageTable() {
+      const tbody = document.getElementById('manage-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      knownViewers.forEach(v => {
+        const tr = document.createElement('tr');
+        const lastSeenDate = v.lastSeen ? new Date(v.lastSeen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Never';
+        tr.innerHTML = `
+          <td><strong>${escapeHtml(v.name)}</strong></td>
+          <td><code>${escapeHtml(v.pin)}</code></td>
+          <td style="color:var(--text-secondary); font-size:12px;">${lastSeenDate}</td>
+          <td style="text-align:right;">
+            <button onclick="deleteDevice('${v.id}')" style="color:var(--accent-red); font-size:12px; padding:4px 8px; background:rgba(255,59,92,0.1); border-radius:4px;">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function addDevice() {
+      const nameInput = document.getElementById('new-device-name');
+      const pinInput = document.getElementById('new-device-pin');
+      const name = nameInput.value.trim();
+      const pin = pinInput.value.trim();
+
+      if (!name || !pin) {
+        alert('Please enter both Target Name and PIN');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/known-viewers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, pin })
+        });
+        if (res.ok) {
+          nameInput.value = '';
+          pinInput.value = '';
+          await loadKnownViewers();
+        } else {
+          alert('Failed to register viewer target');
+        }
+      } catch (e) {
+        console.error('Error adding device', e);
+      }
+    }
+
+    async function deleteDevice(id) {
+      if (!confirm('Remove this registered viewer target?')) return;
+      try {
+        const res = await fetch(`/api/known-viewers/${id}`, { method: 'DELETE' });
+        if (res.ok) {
+          await loadKnownViewers();
+        }
+      } catch (e) {
+        console.error('Error deleting device', e);
+      }
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>"']/g, function(m) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+      });
+    }
+
+    // Modal controls
+    const manageModal = document.getElementById('manage-modal');
+    document.getElementById('manage-devices-btn').addEventListener('click', () => manageModal.classList.add('show'));
+    document.getElementById('close-manage-btn').addEventListener('click', () => manageModal.classList.remove('show'));
+    document.getElementById('done-manage-btn').addEventListener('click', () => manageModal.classList.remove('show'));
+    document.getElementById('add-device-btn').addEventListener('click', addDevice);
+
+    // Custom PIN Links
     document.getElementById('present-link').addEventListener('click', (e) => {
       e.preventDefault();
       const pin = document.getElementById('session-pin').value || Math.floor(1000 + Math.random() * 9000).toString();
@@ -138,6 +466,10 @@
       }
       window.location.href = `viewer.html?pin=${pin}`;
     });
+
+    // Auto-refresh viewer statuses every 5 seconds
+    loadKnownViewers();
+    setInterval(loadKnownViewers, 5000);
   </script>
 </body>
 </html>

@@ -1,6 +1,7 @@
 version: '3.8'
 
 services:
+  # Live / Production Release Service (Port 3000)
   telestrator:
     build:
       context: .
@@ -9,7 +10,7 @@ services:
     container_name: telestrator
     restart: unless-stopped
     ports:
-      - "3000:3000"
+      - "${LIVE_PORT:-3000}:3000"
     environment:
       - NODE_ENV=production
       - PORT=3000
@@ -22,8 +23,37 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  # Prelive / Alpha Test Service (Port 3001)
+  telestrator-prelive:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ghcr.io/grove-tech-tampa/webtellestrator:prelive
+    container_name: telestrator-prelive
+    restart: unless-stopped
+    ports:
+      - "${PRELIVE_PORT:-3001}:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+    volumes:
+      - telestrator-prelive-data:/app/server/data
+      - telestrator-prelive-uploads:/app/public/uploads
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    profiles:
+      - prelive
+      - all
+
 volumes:
   telestrator-data:
     driver: local
   telestrator-uploads:
+    driver: local
+  telestrator-prelive-data:
+    driver: local
+  telestrator-prelive-uploads:
     driver: local
